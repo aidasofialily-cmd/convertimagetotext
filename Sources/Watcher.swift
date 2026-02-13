@@ -42,3 +42,19 @@ class ScreenshotWatcher {
         }
     }
 }
+
+func performOCR(on url: URL) {
+    let request = VNRecognizeTextRequest { (request, error) in
+        guard let observations = request.results as? [VNRecognizedTextObservation] else { return }
+        let recognizedText = observations.compactMap { $0.topCandidates(1).first?.string }.joined(separator: "\n")
+        
+        // Save to a .txt file with the same name
+        let txtURL = url.deletingPathExtension().appendingPathExtension("txt")
+        try? recognizedText.write(to: txtURL, atomically: true, encoding: .utf8)
+        
+        print("✅ Saved OCR to: \(txtURL.lastPathComponent)")
+    }
+    
+    let handler = VNImageRequestHandler(url: url, options: [:])
+    try? handler.perform([request])
+}
